@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Frameworks</title>
+</head>
+<body>
+    <h1>Frameworks</h1>
+    <form id="frameworksForm">
+        <div id="frameworks-list">
+            <!-- Frameworks will be dynamically added here -->
+        </div>
+        <button type="submit">Submit</button>
+    </form>
+
+    <div id="surveyQuestionsContainer">
+        <!-- Survey questions will be dynamically added here after form submission -->
+    </div>
+
+    <button id="nextButton">Next</button> <!-- Next button added -->
+    
+    <button type="submit">Submit</button> 
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const frameworksForm = document.getElementById('frameworksForm');
+            const surveyQuestionsContainer = document.getElementById('surveyQuestionsContainer');
+            const nextButton = document.getElementById('nextButton'); // Get the Next button
+
+            let currentQuestionIndex = 0; // Keep track of the index of the current question
+            let surveyQuestions = []; // Array to store fetched survey questions
+
+            frameworksForm.addEventListener('submit', async (event) => {
+                event.preventDefault();
+
+                const selectedFramework = document.querySelector('input[name="framework"]:checked');
+                if (!selectedFramework) {
+                    console.error('No framework selected');
+                    return;
+                }
+
+                const selectedFrameworkId = selectedFramework.value;
+
+                try {
+                    const response = await fetch(`/survey-questions/${selectedFrameworkId}`);
+                    surveyQuestions = await response.json(); // Store fetched questions
+                    displaySurveyQuestion(currentQuestionIndex); // Display first question
+                } catch (error) {
+                    console.error('Error fetching survey questions:', error);
+                }
+            });
+
+            // Function to display a single survey question
+            function displaySurveyQuestion(index) {
+                surveyQuestionsContainer.innerHTML = '';
+
+                const questionElement = document.createElement('p');
+                questionElement.textContent = surveyQuestions[index].question_text;
+                surveyQuestionsContainer.appendChild(questionElement);
+            }
+
+            // Event listener for the Next button
+            nextButton.addEventListener('click', () => {
+                currentQuestionIndex++; // Increment the index
+                if (currentQuestionIndex < surveyQuestions.length) {
+                    // If there are more questions, display the next question
+                    displaySurveyQuestion(currentQuestionIndex);
+                } else {
+                    // If there are no more questions, alert the user
+                    alert('No more questions.');
+                    // Optionally, you can reset the index to start from the beginning
+                    // currentQuestionIndex = 0;
+                }
+            });
+        });
+
+        fetch('/frameworks')
+            .then(response => response.json())
+            .then(data => {
+                const frameworksList = document.getElementById('frameworks-list');
+                data.forEach(framework => {
+                    const radioButton = document.createElement('input');
+                    radioButton.type = 'radio';
+                    radioButton.name = 'framework';
+                    radioButton.value = framework.id;
+
+                    const label = document.createElement('label');
+                    label.textContent = framework.name;
+
+                    const div = document.createElement('div');
+                    div.appendChild(radioButton);
+                    div.appendChild(label);
+
+                    frameworksList.appendChild(div);
+                });
+            })
+            .catch(error => console.error('Error fetching frameworks:', error));
+
+    </script>
+</body>
+</html>
